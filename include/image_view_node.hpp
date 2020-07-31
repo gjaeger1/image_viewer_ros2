@@ -31,14 +31,15 @@ public:
   explicit ImageViewNode(
     const std::string & input, const std::string & node_name = "image_view_node",
     bool watermark = true)
-  : Node(node_name, "", true)
+  : Node(node_name, "")
   {
     // Create a subscription on the input topic.
+    std::cout << "Creating subscription\n";
     sub_ = this->create_subscription<sensor_msgs::msg::Image>(
-      input,
+      input,10,
       [node_name, watermark](const sensor_msgs::msg::Image::SharedPtr msg) {
         // Create a cv::Mat from the image message (without copying).
-
+        std::cout << "Processing frame...\n";
         cv::Mat cv_mat(
           msg->height, msg->width,
           encoding2mat_type(msg->encoding),
@@ -53,8 +54,8 @@ public:
           draw_on_image(cv_mat, ss.str(), 60);
         }
         // Show the image.
-        CvMat c_mat = cv_mat;
-        cvShowImage(node_name.c_str(), &c_mat);
+        cv::Mat c_mat = cv_mat;
+        cv::imshow(node_name.c_str(), c_mat);
         char key = cv::waitKey(1);    // Look for key presses.
         if (key == 27 /* ESC */ || key == 'q') {
           rclcpp::shutdown();
@@ -65,8 +66,7 @@ public:
             key = cv::waitKey(1);
           }
         }
-      },
-      rmw_qos_profile_sensor_data);
+      });
   }
 
 private:
